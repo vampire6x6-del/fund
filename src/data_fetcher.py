@@ -9,6 +9,38 @@ from typing import Dict, List, Optional, Tuple
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+def get_fund_real_time_estimate_from_1234567(fund_code: str) -> dict:
+    """
+    调用天天基金API获取基金实时估值（核心补充接口）
+    返回：包含估值、涨跌幅、更新时间等信息的字典，失败返回空字典
+    """
+    # 天天基金实时估值接口（稳定可用）
+    url = f"http://fundgz.1234567.com.cn/js/{fund_code}.js"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": f"http://fund.eastmoney.com/{fund_code}.html"
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        # 接口返回格式：jsonpgz({"fundcode":"002611","name":"易方达蓝筹精选混合","jzrq":"2026-02-11","dwjz":"1.3500","gsz":"1.3620","gszzl":"0.89","gztime":"2026-02-12 14:30:00"});
+        # 提取JSON部分
+        data_str = response.text.lstrip("jsonpgz(").rstrip(");")
+        data = json.loads(data_str)
+        
+        # 格式化返回数据
+        return {
+            "fund_code": data.get("fundcode", ""),
+            "fund_name": data.get("name", ""),
+            "date": data.get("jzrq", ""),  # 净值日期
+            "nav": float(data.get("dwjz", 0)),  # 最新单位净值
+            "estimate_nav": float(data.get("gsz", 0)),  # 实时估算净值
+            "estimate_change": float(data.get("gszzl", 0)),  # 实时估算涨跌幅（%）
+            "update_time": data.get("gztime", "")  # 估值更新时间
+        }
+    except Exception as e:
+        logging.error(f"调用天天基金API失败（{fund_code}）：{e}")
+        return {}
 def get_fund_history_nav(fund_code: str, days: int = 365) -> Optional[pd.DataFrame]:
     """
     Fetches historical NAV data for the fund (parallel paging).
@@ -316,7 +348,7 @@ def get_fund_holdings(fund_code: str) -> Optional[Tuple[str, List[Dict[str, floa
                 target_name = fund_name
                 
                 # 1. Remove company prefixes
-                common_prefixes = ["南方", "华夏", "博时", "易方达", "嘉实", "富国", "广发", "汇添富", "招商", "工银", "中欧", "天弘", "华安", "鹏华", "国泰", "华宝", "银华", "大成", "景顺长城"]
+                common_prefixes = ["南方", "华夏", "博时", "易方达", "嘉实", "富国", "广发", "汇添富", "招商", "工银", "中欧", "天弘", "华安", "鹏华", "国泰", "华宝", "银华", "大成", "景顺长城","华泰柏瑞"]
                 for prefix in common_prefixes:
                     if target_name.startswith(prefix):
                         target_name = target_name[len(prefix):]
