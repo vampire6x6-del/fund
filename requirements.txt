@@ -1,0 +1,7 @@
+streamlit
+pandas
+requests
+lxml
+altair
+html5lib
+beautifulsoup4
