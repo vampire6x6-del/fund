@@ -125,7 +125,7 @@ if st.button("📱 基金配置 & 刷新", width='stretch'):
 if st.session_state.get("sidebar_expanded", False):
     st.sidebar.header("配置")
     default_funds = "019454,165520,021986,025208,012544,012920,270023,001467,016532,018043,270042,166301,002611,457001,539002"
-    fund_input = st.sidebar.text_area("基金代码", value=default_funds, height=80)
+    fund_input = st.sidebar.text_area("基金代码", value=default_funds, height=160)
     codes = [c.strip() for c in fund_input.split(',') if c.strip()]
 
     for code in codes:
